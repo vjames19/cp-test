@@ -2,7 +2,6 @@ package com.github.vjames19.cptest.parser
 
 import com.github.vjames19.cptest.User
 import com.github.vjames19.cptest.UserId
-import java.io.BufferedReader
 import java.io.Reader
 
 /**
