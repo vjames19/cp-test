@@ -1,6 +1,6 @@
-package com.github.vjames19.cptest
+package com.github.vjames19.cptest.network
 
-import com.github.vjames19.cptest.network.InMemoryNetworkService
+import com.github.vjames19.cptest.User
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldEqualTo

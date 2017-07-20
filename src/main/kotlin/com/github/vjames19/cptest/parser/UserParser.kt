@@ -8,7 +8,7 @@ import java.io.Reader
  * Created by victor.reventos on 7/19/17.
  */
 class UserParser {
-    val spaceRegex = Regex("\\s+")
+    val whiteSpaceRegex = Regex("\\s+")
 
     fun parse(usersReader: Reader, connectionsReader: Reader): List<User> {
         val users = parseUsers(usersReader)
@@ -29,7 +29,7 @@ class UserParser {
     }
 
     private fun parseUserLine(line: String): Pair<Int, String> {
-        val tokens = line.trim().split(spaceRegex).filter { it.isNotBlank() }
+        val tokens = line.trim().split(whiteSpaceRegex).filter { it.isNotBlank() }
         val id = tokens[0].trim().toInt()
         val name = tokens[1].trim()
         return id to name
