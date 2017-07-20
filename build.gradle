@@ -65,6 +65,8 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlinVersion"
     compile "org.jooby:jooby-lang-kotlin:$joobyVersion"
     compile "org.jooby:jooby-netty:$joobyVersion"
+    compile "org.jooby:jooby-jackson:$joobyVersion"
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.8.7"
 
     testCompile "org.jetbrains.spek:spek-api:$spekVersion"
     testRuntime "org.jetbrains.spek:spek-junit-platform-engine:$spekVersion"

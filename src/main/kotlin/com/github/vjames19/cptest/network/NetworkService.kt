@@ -18,4 +18,6 @@ interface NetworkService {
     fun numberOfCommonConnections(userA: UserId, userB: UserId): Int
 
     fun numberOfConnections(userId: UserId): Int
+
+    fun getUser(userId: UserId): Optional<User>
 }

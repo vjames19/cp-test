@@ -23,18 +23,6 @@ class InMemoryNetworkService(private val network: Map<UserId, User>) : NetworkSe
     }
 
     override fun whoCanIntroduce(userInQuestion: UserId, toUser: UserId): Set<User> {
-//        if (!exists(userInQuestion) || !exists(toUser)) return emptySet()
-//
-//        val user = network[toUser]!!
-//
-////        return user.connections
-////                .filter {
-////                    network[it]?.let { connection ->
-////                        connection.id == userInQuestion ||  connection.connections.contains(userInQuestion)
-////                    } ?: false
-////                }.map { network[it]!! }
-////                .toSet()
-
         return commonConnections(userInQuestion, toUser)
                 .filter { exists(it) }
                 .map { network[it]!! }
@@ -58,5 +46,9 @@ class InMemoryNetworkService(private val network: Map<UserId, User>) : NetworkSe
         return network[userId]?.connections?.size ?: 0
     }
 
-    fun exists(userId: UserId): Boolean = network.containsKey(userId)
+    override fun getUser(userId: UserId): Optional<User> {
+        return network[userId].toOptional()
+    }
+
+    private fun exists(userId: UserId): Boolean = network.containsKey(userId)
 }
