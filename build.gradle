@@ -61,6 +61,11 @@ task wrapper(type: Wrapper) {
     distributionType = org.gradle.api.tasks.wrapper.Wrapper.DistributionType.ALL
 }
 
+task execute(type: JavaExec) {
+    main = mainClass
+    classpath = sourceSets.main.runtimeClasspath
+}
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlinVersion"
     compile "org.jooby:jooby-lang-kotlin:$joobyVersion"

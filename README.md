@@ -14,12 +14,18 @@ The server is implemented: https://github.com/vjames19/cp-test/blob/master/src/m
 
 # How to run
 
+## Console
+```
+./gradlew execute -PmainClass="com.github.vjames19.cptest.ConsoleApplicationKt"
+```
+
+## Server
 The following starts the server
 ```sh
 ./gradlew run
 ```
 
-## Commands
+### Commands
 
 Get a user by id
 ```
