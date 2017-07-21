@@ -3,6 +3,7 @@ package com.github.vjames19.cptest.network
 import com.github.vjames19.cptest.User
 import com.github.vjames19.cptest.UserId
 import com.github.vjames19.cptest.utils.toOptional
+import com.github.vjames19.cptest.utils.zip
 import java.util.*
 
 /**
@@ -10,45 +11,78 @@ import java.util.*
  */
 class InMemoryNetworkService(private val network: Map<UserId, User>) : NetworkService {
 
-    // Given that the network is immutable, I'm caching the values for users with max and min connections
-    private val userWithMaxConnections = network.maxBy { it.value.connections.size }?.value.toOptional()
-    private val userWithMinConnections = network.minBy { it.value.connections.size }?.value.toOptional()
-
-    override fun getUserWithMaxConnections(): Optional<User> {
-        return userWithMaxConnections
+    override fun getUserWithMaxConnections(degree: Int): Optional<User> {
+        return network.maxBy { connections(it.value, degree).size }?.value.toOptional()
     }
 
-    override fun getUserWithMinConnections(): Optional<User> {
-        return userWithMinConnections
+    override fun getUserWithMinConnections(degree: Int): Optional<User> {
+        return network.minBy { connections(it.value, degree).size }?.value.toOptional()
     }
 
-    override fun whoCanIntroduce(userInQuestion: UserId, toUser: UserId): Set<User> {
-        return commonConnections(userInQuestion, toUser)
-                .filter { exists(it) }
-                .map { network[it]!! }
-                .toSet()
+    override fun whoCanIntroduce(userInQuestionId: UserId, toUserId: UserId, degree: Int): Set<User> {
+        return getUser(userInQuestionId).zip(getUser(toUserId)) { _, toUser ->
+            val result = mutableSetOf<User>()
+            toUser.connections
+                    .forEach { whoCanIntroduce(userInQuestionId, toUser, degree, mutableSetOf(), result) }
+            result.toSet()
+        }.orElseGet { emptySet() }
     }
 
-    override fun numberOfCommonConnections(userA: UserId, userB: UserId): Int {
-        if (!exists(userA) || !exists(userB)) return 0
+    private fun whoCanIntroduce(userInQuestion: UserId, toUser: User, degree: Int, visited: MutableSet<UserId>, result: MutableSet<User>) {
+        if (degree <= 0) return
 
-        return network[userA]!!.connections.intersect(network[userB]!!.connections).size
+        if (userInQuestion == toUser.id) return
+
+        if (visited.contains(toUser.id)) return
+        visited.add(toUser.id)
+
+        if (toUser.connections.contains(userInQuestion)) result.add(toUser)
+
+        toUser.connections.forEach {
+            getUser(it).ifPresent { whoCanIntroduce(userInQuestion, it, degree - 1, visited, result) }
+        }
     }
 
-    private fun commonConnections(userA: UserId, userB: UserId): Set<UserId> {
-        if (!exists(userA) || !exists(userB)) return emptySet()
-
-        return network[userA]!!.connections.intersect(network[userB]!!.connections)
+    override fun numberOfCommonConnections(userA: UserId, userB: UserId, degree: Int): Int {
+        return commonConnections(userA, userB, degree).size
     }
 
+    private fun commonConnections(userA: UserId, userB: UserId, degree: Int): Set<UserId> {
+        return getUser(userA)
+                .zip(getUser(userB)) { a, b ->
+                    connections(a, degree).intersect(connections(b, degree))
+                }.orElseGet { emptySet() }
+    }
 
-    override fun numberOfConnections(userId: UserId): Int {
-        return network[userId]?.connections?.size ?: 0
+    override fun numberOfConnections(userId: UserId, degree: Int): Int {
+        return getUser(userId)
+                .map { connections(it, degree).size }
+                .orElseGet { 0 }
+    }
+
+    fun connections(user: User, degree: Int): Set<UserId> {
+        return mutableSetOf<UserId>().apply {
+            connections(user, degree, this)
+            remove(user.id)
+        }.toSet()
+    }
+
+    private fun connections(user: User, degree: Int, result: MutableSet<UserId>): MutableSet<UserId> {
+        if (degree < 0) return result
+
+        if (result.contains(user.id)) return result
+        result.add(user.id)
+
+        user.connections.forEach {
+            getUser(it).ifPresent {
+                connections(it, degree - 1, result)
+            }
+        }
+
+        return result
     }
 
     override fun getUser(userId: UserId): Optional<User> {
         return network[userId].toOptional()
     }
-
-    private fun exists(userId: UserId): Boolean = network.containsKey(userId)
 }

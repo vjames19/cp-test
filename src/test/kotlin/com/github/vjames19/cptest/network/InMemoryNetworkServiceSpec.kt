@@ -22,7 +22,7 @@ object InMemoryNetworkServiceSpec : Spek({
         val user5 = User(5, name = "user5", connections = setOf(6))
         val user6 = User(6, name = "user6", connections = setOf(5))
         val user7 = User(7, name = "user7", connections = emptySet())
-        val user8 = User(8, name = "user8", connections = setOf(9, 10, 11, 12, 13))
+        val user8 = User(8, name = "user8", connections = setOf(9))
         val user9 = User(9, name = "user9", connections = setOf(1, 8))
 
         val network = listOf(user1, user2, user3, user4, user5, user6, user7, user8, user9)
@@ -40,13 +40,23 @@ object InMemoryNetworkServiceSpec : Spek({
 
             given("a user that exists") {
                 it("should return its respective number of connections") {
-                    service.numberOfConnections(1) shouldEqualTo 4
-                    service.numberOfConnections(2) shouldEqualTo 3
-                    service.numberOfConnections(3) shouldEqualTo 3
-                    service.numberOfConnections(4) shouldEqualTo 3
+                    service.numberOfConnections(1) shouldEqualTo 5
+                    service.numberOfConnections(2) shouldEqualTo 4
+                    service.numberOfConnections(3) shouldEqualTo 4
+                    service.numberOfConnections(4) shouldEqualTo 4
                     service.numberOfConnections(5) shouldEqualTo 1
                     service.numberOfConnections(6) shouldEqualTo 1
                     service.numberOfConnections(7) shouldEqualTo 0
+                    service.numberOfConnections(8) shouldEqualTo 2
+                    service.numberOfConnections(9) shouldEqualTo 5
+                }
+            }
+
+            given("that the degree is set to 1") {
+                it("should only return the first degree connections") {
+                    network.values.forEach {
+                        service.numberOfConnections(it.id, 1) shouldEqualTo (it.connections - it.id).size
+                    }
                 }
             }
         }
@@ -60,7 +70,7 @@ object InMemoryNetworkServiceSpec : Spek({
 
             given("a non empty network") {
                 it("should return the one with the max number of connections") {
-                    service.getUserWithMaxConnections().get() shouldEqual user8
+                    service.getUserWithMaxConnections().get() shouldEqual user1
                 }
             }
         }
@@ -82,24 +92,42 @@ object InMemoryNetworkServiceSpec : Spek({
         describe("numberOfCommonConnections") {
             given("that both users exist") {
                 it("should return the right number of common connections") {
-                    service.numberOfCommonConnections(1, 1) shouldEqualTo 4
-                    service.numberOfCommonConnections(1, 2) shouldEqualTo 2
-                    service.numberOfCommonConnections(1, 3) shouldEqualTo 2
-                    service.numberOfCommonConnections(1, 4) shouldEqualTo 2
+                    service.numberOfCommonConnections(1, 1) shouldEqualTo service.numberOfConnections(1)
+                    service.numberOfCommonConnections(1, 2) shouldEqualTo 3
+                    service.numberOfCommonConnections(1, 3) shouldEqualTo 3
+                    service.numberOfCommonConnections(1, 4) shouldEqualTo 3
                     service.numberOfCommonConnections(1, 5) shouldEqualTo 0
                     service.numberOfCommonConnections(1, 6) shouldEqualTo 0
                     service.numberOfCommonConnections(1, 8) shouldEqualTo 1
+
+                }
+
+                given("that the degree is set two one") {
+                    it("should only return the first degree connections") {
+                        service.numberOfCommonConnections(1, 2, 1) shouldEqualTo 2
+                        service.numberOfCommonConnections(1, 3, 1) shouldEqualTo 2
+                        service.numberOfCommonConnections(1, 4, 1) shouldEqualTo 2
+                        service.numberOfCommonConnections(1, 5, 1) shouldEqualTo 0
+                        service.numberOfCommonConnections(1, 6, 1) shouldEqualTo 0
+                        service.numberOfCommonConnections(1, 8, 1) shouldEqualTo 1
+                    }
+                }
+
+                given("that they are both the same users") {
+                    network.keys.forEach {
+                        for (degree in 0..4) {
+                            service.numberOfCommonConnections(it, it, degree) shouldEqualTo service.numberOfConnections(it, degree)
+                        }
+                    }
                 }
             }
 
             given("that one of the users doesn't exist") {
                 it("should return 0") {
-                    service.numberOfCommonConnections(1, -1) shouldEqualTo 0
-                    service.numberOfCommonConnections(2, -1) shouldEqualTo 0
-                    service.numberOfCommonConnections(3, -1) shouldEqualTo 0
-                    service.numberOfCommonConnections(4, -1) shouldEqualTo 0
-                    service.numberOfCommonConnections(5, -1) shouldEqualTo 0
-                    service.numberOfCommonConnections(6, -1) shouldEqualTo 0
+                    network.keys.forEach {
+                        service.numberOfCommonConnections(it, -1) shouldEqualTo 0
+                        service.numberOfCommonConnections(-1, it) shouldEqualTo 0
+                    }
                 }
             }
         }
@@ -125,13 +153,32 @@ object InMemoryNetworkServiceSpec : Spek({
             given("a users that have connections in common") {
                 it("should return the connections that can introduce them") {
                     service.whoCanIntroduce(9, 2) shouldEqual setOf(user1)
+
+                    // when there is a directed path only from 9 to one's circle, then one should be the only one to introduce them
                     service.whoCanIntroduce(2, 9) shouldEqual setOf(user1)
+                    service.whoCanIntroduce(3, 9) shouldEqual setOf(user1)
+                    service.whoCanIntroduce(4, 9) shouldEqual setOf(user1)
+
+                    service.whoCanIntroduce(2, 9, 1) shouldEqual emptySet()
+                    service.whoCanIntroduce(3, 9, 1) shouldEqual emptySet()
+                    service.whoCanIntroduce(4, 9, 1) shouldEqual emptySet()
+
+                    service.whoCanIntroduce(2, 8) shouldEqual emptySet()
+                    service.whoCanIntroduce(3, 8) shouldEqual emptySet()
+                    service.whoCanIntroduce(4, 8) shouldEqual emptySet()
+
+                    service.whoCanIntroduce(2, 8, 3) shouldEqual setOf(user1)
+                    service.whoCanIntroduce(3, 8, 3) shouldEqual setOf(user1)
+                    service.whoCanIntroduce(4, 8, 3) shouldEqual setOf(user1)
 
                     service.whoCanIntroduce(1, 8) shouldEqual setOf(user9)
                     service.whoCanIntroduce(8, 1) shouldEqual setOf(user9)
 
-                    service.whoCanIntroduce(3, 1) shouldEqual setOf(user2, user4)
-                    service.whoCanIntroduce(1, 3) shouldEqual setOf(user2, user4)
+                    service.whoCanIntroduce(3, 1) shouldEqual setOf(user1, user2, user4)
+                    service.whoCanIntroduce(1, 3) shouldEqual setOf(user2, user3, user4)
+
+                    service.whoCanIntroduce(3, 8) shouldEqual emptySet()
+                    service.whoCanIntroduce(3, 8, 3) shouldEqual setOf(user1)
                 }
             }
         }

@@ -16,7 +16,7 @@ The server is implemented: https://github.com/vjames19/cp-test/blob/master/src/m
 
 ## Console
 ```
-./gradlew execute -PmainClass="com.github.vjames19.cptest.ConsoleApplicationKt"
+./gradlew runConsole
 ```
 
 ## Server
@@ -27,6 +27,9 @@ The following starts the server
 
 ### Commands
 
+The commands accept a "degree" query parameter that specifies the degree of connections for each request.
+By default the degree is set to 2.
+
 Get a user by id
 ```
 curl -X GET http://localhost:8080/network/1
@@ -34,27 +37,27 @@ curl -X GET http://localhost:8080/network/1
 
 Get the user with min number of connections
 ```
-curl -X GET http://localhost:8080/network/minConnections
+curl -X GET http://localhost:8080/network/minConnections?degree=2
 ```
 
 Get the user with max number of connections
 ```
-curl -X GET http://localhost:8080/network/maxConnections
+curl -X GET http://localhost:8080/network/maxConnections?degree=2
 ```
 
-Get the size of connections for a given user
+Get the size of connections for a given user.
 ```
-curl -X GET http://localhost:8080/network/1/connections/size
-```
-
-Get the number of connections in common between two users
-```
-curl -X GET http://localhost:8080/network/1/connections/common/2
+curl -X GET http://localhost:8080/network/1/connections/size?degree=2
 ```
 
-Get the users that can introduce two users
+Get the number of connections in common between two users.
 ```
-curl -X GET http://localhost:8080/network/5/introduce/9
+curl -X GET http://localhost:8080/network/1/connections/common/2?degree=2
+```
+
+Get the users that can introduce two users: Who can introduce 5 to 9?
+```
+curl -X GET http://localhost:8080/network/5/introduce/9?degree=2
 ```
 
 # Test

@@ -61,8 +61,13 @@ task wrapper(type: Wrapper) {
     distributionType = org.gradle.api.tasks.wrapper.Wrapper.DistributionType.ALL
 }
 
-task execute(type: JavaExec) {
-    main = mainClass
+task runApp(type: JavaExec) {
+    main = project.hasProperty("mainClass") ? project.property("mainClass") : mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runConsole(type: JavaExec) {
+    main = "com.github.vjames19.cptest.ConsoleApplicationKt"
     classpath = sourceSets.main.runtimeClasspath
 }
 
